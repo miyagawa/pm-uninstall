@@ -60,10 +60,9 @@ sub vname_for {
 sub ask_permission {
     my($module, $dist, $vname, $packlist) = @_;
 
-    $vname = vname_for($module);
-
     my(@deps, %seen);
     if ($opt->{check_deps}) {
+        $vname = vname_for($module);
         warn "Checking modules depending on $vname\n" if $opt->{verbose};
         my $content = get("$base_url$vname");
         for my $dep ($content =~ m|<th align=left>([^<]+)</th>|smg) {
@@ -91,7 +90,7 @@ sub ask_permission {
         $default = 'n';
     }
 
-    lc(prompt("Are you sure to uninstall $module?", $default)) eq 'y';
+    lc(prompt("Are you sure to uninstall $dist?", $default)) eq 'y';
 }
 
 sub find_packlist {

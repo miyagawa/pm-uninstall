@@ -6,6 +6,8 @@ use File::Spec;
 use Getopt::Long qw/GetOptions/;
 use Pod::Usage qw/pod2usage/;
 use Config;
+use YAML;
+use LWP::Simple;
 use ExtUtils::MakeMaker;
 
 use constant WIN32 => $^O eq 'MSWin32';
@@ -29,8 +31,6 @@ main();
 exit;
 
 sub main {
-    init_tools();
-
     print "--- dry-run ---\n" if !$opt->{dependence} and $opt->{dry_run};
     for my $module (@modules) {
         my $module_name = $module->[0];
@@ -49,8 +49,7 @@ sub main {
                         (my $file = $_) =~ s|\\|/|g;
                         if (-f $_ and $file =~ m|$module_path\.pm$|) {
                             my $yaml = get("$cpanmetadb/$module_name"); 
-                            eval "use Parse::CPAN::Meta; 1" or die "Cannot required Parse::CPAN::Meta.\n";
-                            my $meta = parse_meta_string($yaml);
+                            my $meta = YAML::Load($yaml);
                             die "Couldn't finding $module on cpanmetadb failed.\n" unless $meta->{distfile};
                             (my $dist_name = $meta->{distfile}) =~ s{\w+/\w+/\w+/([\w.-]+)-[\w.]+\.(?:tar\.(?:gz|bz|bz2)|zip)}{$1};
 
@@ -77,7 +76,7 @@ sub main {
             }
         }
         warn "$module_name not installed or .packlist not found\n" unless $is_installed;
-        print "Successfully $module_name\n" if !$opt->{dependence} and $is_installed;
+        print "Successfully uninstalled $module_name\n" if !$opt->{dependence} and $is_installed;
     }
 }
 
@@ -95,28 +94,6 @@ sub which {
         }
     }
     return;
-}
-
-sub init_tools {
-    if (!$ENV{DEBUG_WGET} && eval { require LWP::Simple }) {
-        *get = sub { LWP::Simple::get(@_) };
-    }
-    elsif (my $wget = which('wget')) {
-        *get = sub {
-            my($uri) = @_;
-            open my $fh, "$wget $uri -q -O - |" or die "wget $uri: $!";
-            local $/;
-            <$fh>;
-        };
-    }
-    else {
-        die "Cannot find LWP::Simple and wget.\n";
-    }
-}
-
-sub parse_meta_string {
-    my $yaml = shift;
-    return eval { (Parse::CPAN::Meta::Load($yaml))[0] } || {};
 }
 
 __END__

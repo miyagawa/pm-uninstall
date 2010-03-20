@@ -11,8 +11,6 @@ use LWP::Simple;
 use YAML;
 use CPAN::DistnameInfo;
 
-use constant WIN32 => $^O eq 'MSWin32';
-my $quote = WIN32 ? q/"/ : q/'/;
 my $base_url = 'http://deps.cpantesters.org/depended-on-by.pl?dist=';
 my $cpanmetadb = 'http://cpanmetadb.appspot.com/v1.0/package';
 
